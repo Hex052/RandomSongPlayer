@@ -45,7 +45,7 @@ namespace RandomSongPlayer
 
         private static string GetMapDirectoryName(Beatmap mapData)
         {
-            return Setup.RandomSongsFolder + "/" + mapData.Key + " (" + mapData.Metadata.SongName + " - " + mapData.Metadata.LevelAuthorName + ")";
+            return Path.Combine(Setup.RandomSongsFolder, mapData.Key + " (" + mapData.Metadata.SongName + " - " + mapData.Metadata.LevelAuthorName + ")");
         }
 
         private static void UnzipFile(string fileName)

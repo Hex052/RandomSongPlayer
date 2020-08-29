@@ -43,7 +43,7 @@ namespace RandomSongPlayer
             Logger.log = logger;
 
             Sprite coverImage = SongCore.Utilities.Utils.LoadSpriteFromResources("RandomSongPlayer.Assets.new-rst-logo.png");
-            randomSongsFolder = Collections.AddSeperateSongFolder("Random Songs", Environment.CurrentDirectory + "/" + Setup.RandomSongsFolder, FolderLevelPack.NewPack, coverImage);
+            randomSongsFolder = Collections.AddSeperateSongFolder("Random Songs", Path.Combine(Environment.CurrentDirectory, Setup.RandomSongsFolder), FolderLevelPack.NewPack, coverImage);
 
             config = cfgProvider.Generated<PluginConfig>();
         }
@@ -52,7 +52,7 @@ namespace RandomSongPlayer
         public void OnApplicationStart()
         {
             Logger.log.Info("OnApplicationStart");
-            BS_Utils.Utilities.BSEvents.menuSceneLoadedFresh += BSEvents_menuSceneLoadedFresh;
+            BSEvents.menuSceneLoadedFresh += BSEvents_menuSceneLoadedFresh;
         }
 
         private void _levelFilteringNavController_didSelectPackEvent(LevelFilteringNavigationController levelFilteringNavigationController, IAnnotatedBeatmapLevelCollection iAnnotatedBeatmapLevelCollection, GameObject gameObject, BeatmapCharacteristicSO beatmapCharacteristicSO)

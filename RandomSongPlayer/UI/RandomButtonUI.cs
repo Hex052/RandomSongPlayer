@@ -4,7 +4,6 @@ using BeatSaberMarkupLanguage.Components;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
-using static BeatSaberMarkupLanguage.Components.CustomListTableData;
 
 namespace RandomSongPlayer.UI
 {
@@ -15,7 +14,7 @@ namespace RandomSongPlayer.UI
         private LevelSelectionNavigationController levelCollection;
 
         [UIComponent("random-button")]
-        internal UnityEngine.UI.Button button;
+        internal UnityEngine.UI.Button button = null; //Explicit set to null to supress error about default value
 
         internal void Setup(Plugin parentPlugin)
         {
