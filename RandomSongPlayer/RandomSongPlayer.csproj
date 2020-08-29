@@ -107,9 +107,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Filter\FilterData.cs" />
-    <Compile Include="Filter\FilterHelper.cs" />
-    <Compile Include="Filter\RandomKeyFilter.cs" />
     <Compile Include="LevelHelper.cs" />
     <Compile Include="MapInstaller.cs" />
     <Compile Include="MapTools.cs" />
