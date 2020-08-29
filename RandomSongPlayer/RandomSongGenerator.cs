@@ -13,10 +13,25 @@ namespace RandomSongPlayer
 {
     internal static class RandomSongGenerator
     {
+        /// <summary>
+        /// Pulls a random beatmap from BeatSaver using a default filter
+        /// (uses settings in mod)
+        /// </summary>
+        /// <returns>A beatmap that has been chosen randomly, or null</returns>
         internal static async Task<Beatmap> GenerateRandomKey()
         {
+            Logger.log.Debug(Environment.StackTrace); // TODO remove debug
+            return await GenerateRandomKey(Filter);
+        }
+        /// <summary>
+        /// Pulls a random beatmap from BeatSaver that passes the filter
+        /// </summary>
+        /// <param name="filter">A filter to pass the map through</param>
+        /// <returns>A beatmap that has been chosen randomly, or null</returns>
+        internal static async Task<Beatmap> GenerateRandomKey(Func<Beatmap, bool> mapfilter)
+        {
             int tries = 0;
-            int maxTries = 20;
+            int maxTries = Plugin.config.MaxRetries;
             string randomKey = null;
             Beatmap mapData = null;
 
@@ -28,23 +43,25 @@ namespace RandomSongPlayer
             int keyAsDecimal = int.Parse(latestKey, System.Globalization.NumberStyles.HexNumber);
 
             // Randomize the key and download the map
-            if (randomKey == null)
+            do
             {
-                // Check for Beatsaver Rating
-                // if (minRating != null)
-                    // await FilterHelper.SetFilterPageNumbers(Plugin.client, (int)minRating, "minRatingAPIPage");
-
-                while (tries < maxTries && mapData == null)
+                int randomNumber = Plugin.rnd.Next(0, keyAsDecimal + 1);
+                randomKey = randomNumber.ToString("x");
+                mapData = await UpdateMapData(randomKey);
+                if (mapfilter != null && mapfilter(mapData))
                 {
-                    int randomNumber = Plugin.rnd.Next(0, keyAsDecimal + 1);
-                    randomKey = randomNumber.ToString("x");
-                    mapData = await UpdateMapData(randomKey);
-                    tries++;
+                    return mapData;
                 }
-            }
-            return mapData;
+                tries++;
+            } while (tries < maxTries);
+            return null;
         }
 
+        /// <summary>
+        /// Tries to get a map with the specified key
+        /// </summary>
+        /// <param name="randomKey">Key whose beatmap to get</param>
+        /// <returns>A beatmap or null</returns>
         private static async Task<Beatmap> UpdateMapData(string randomKey)
         {
             try
@@ -65,6 +82,65 @@ namespace RandomSongPlayer
                 Console.WriteLine(ex.ToString());
             }
             return null;
+        }
+
+        /// <summary>
+        /// Will check if the beatmap satisfies all the filters
+        /// specified in the config file.
+        /// If any filters cannot be checked because of null values,
+        /// the beatmap will be assumed to pass those filters
+        ///
+        /// Also checks to be sure we aren't downloading a map we already
+        /// have saved
+        /// </summary>
+        /// <param name="mapData"></param>
+        /// <returns>True if the beatmap satisfies the filters</returns>
+        internal static bool Filter(Beatmap mapData)
+        {
+            //TODO remove debug
+            Logger.log.Info("Trying with " + mapData.ID);
+
+            FilterConfig config = Plugin.config.Filter;
+            if (config == null)
+            {
+                return true;
+            }
+            Metadata meta = mapData.Metadata;
+
+            // Check all difficulties
+            Difficulties difficulties = meta.Difficulties;
+            if (
+                config.Easy && !difficulties.Easy
+                || config.Normal && !difficulties.Normal
+                || config.Hard && !difficulties.Hard
+                || config.Expert && !difficulties.Expert
+                || config.ExpertPlus && !difficulties.ExpertPlus
+            )
+            {
+                return false;
+            }
+            //Check BPM and length
+            if (
+                meta.BPM < config.MinBPM || meta.BPM > config.MaxBPM
+                || meta.Duration < config.MinLength || meta.Duration > config.MaxLength
+            )
+            {
+                return false;
+            }
+            //Check rating and download count
+            Stats stat = mapData.Stats;
+            if (stat.Rating < config.MinRating || stat.Downloads < config.MinDownloads)
+            {
+                return false;
+            }
+
+            //Ensure the song isn't yet downloaded
+            if (SongCore.Collections.RetrieveExtraSongData(mapData.ID) != null)
+            {
+                return false;
+            }
+
+            return true;
         }
     }
 }
